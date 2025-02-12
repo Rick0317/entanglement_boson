@@ -32,8 +32,7 @@ h_variables = [1/2, 1/2, lam, - lam / 3]
 H = henon_heiles(h_variables)
 
 # Occupation number (Number of basis functions)
-truncation = 60
-truncations = [60, 70]
+truncations = [40, 40]
 energy_list = []
 for truncation in truncations:
 
@@ -68,7 +67,7 @@ for truncation in truncations:
 differences = abs(energy_list[1] - energy_list[0])
 
 
-truncation = 60
+truncation = 40
 # Calculate the exact eigenvalues and eigenvectors w.r.t. the truncation
 eigenvalues1, e1 = boson_eigenspectrum_full(H, truncation)
 ee1 = e1[:, 0]
@@ -81,30 +80,36 @@ print(f"Unbound point: {unbound_point}")
 parameters_list = []
 
 # range of eigenvalues and state to calculate
-values = [20 * x for x in range(9)]
+values = [199]
 # Loop over all the eigenstates
-for i in range(200):
+for i in values:
     ee2 = e1[:, i]  # Extract i-th eigenstate
     ff1 = ee2.reshape(truncation, truncation)
 
     MI_evolved = []
-    # t_list = [100 * x for x in range(1, 5)]
-    # for t in t_list:
-    #     time_evolved = get_time_evolution(H, truncation, ee2, t)
-    #     # ff1_evolved = time_evolved.reshape(truncation, truncation)
-    #     ff1_evolved = np.outer(time_evolved, time_evolved)
-    #     print(ff1_evolved.shape)
-    #     MI_evolved.append(von_neumann_entropy_rdm(ff1_evolved, truncation))
+    cycles = 40
+    t_list = [0.03 * x for x in range(cycles)]
+    count = 0
+    for t in t_list:
+        count += 1
+        print(f"Progress: {count}/{cycles}")
+        time_evolved = get_time_evolution(H, truncation, ee2, t)
+        # ff1_evolved = time_evolved.reshape(truncation, truncation)
+        ff1_evolved = np.outer(time_evolved, time_evolved)
+        entropy = von_neumann_entropy_rdm(ff1_evolved, truncation)
+        MI_evolved.append(entropy)
+        print(f"Entropy: {entropy}")
 
     # print(f"Time evolved MI: {MI_evolved}")
     # Append the parameters for the current state
     parameters_list.append([f'State {i}',
         round(eigenvalues1[i], 7),
-        round(mutual_information(ff1, truncation), 7),
+        round(max(MI_evolved), 7),
         round(covariance(ee2, truncation), 7),
         round(abs(covariance_x2(ee2, truncation)), 7),
         round(covariance_x21(ee2, truncation), 7)
     ])
+
 
 
 energies = np.array(parameters_list)[:,1].astype(float)
@@ -113,6 +118,8 @@ mutual_info = np.abs(np.array(parameters_list)[:,2].astype(float))
 covar_x = np.array(parameters_list)[:,3].astype(float)
 covar_x2 = np.array(parameters_list)[:,4].astype(float)
 covar_x21 = np.abs(np.array(parameters_list)[:,5].astype(float))
+
+print(f"MI max: {mutual_info}")
 
 # Print results for all states
 # for i, params in enumerate(parameters_list):
